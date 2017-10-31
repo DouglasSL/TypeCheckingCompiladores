@@ -109,7 +109,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// StatementList sl;
 	// Exp e;
 	public Type visit(MethodDecl n) {
-		n.t.accept(this);
+		Type t = n.t.accept(this);
 		n.i.accept(this);
 		for (int i = 0; i < n.fl.size(); i++) {
 			n.fl.elementAt(i).accept(this);
@@ -120,7 +120,12 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		for (int i = 0; i < n.sl.size(); i++) {
 			n.sl.elementAt(i).accept(this);
 		}
-		n.e.accept(this);
+		Type e = n.e.accept(this);
+		
+		if (!symbolTable.compareTypes(t, e)) {
+			System.out.println("Tipo não coincide com o retorno (MethodDecl)");
+		}
+		
 		return null;
 	}
 
