@@ -163,7 +163,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 
 	// String s;
 	public Type visit(IdentifierType n) {
-		if(!symbolTable.containsClass(n.toString())) {
+		if(!symbolTable.containsClass(n.s)) {
 			System.err.println("Tipo da classe não encontrada (IdentifierType)");
 		}
 		return n;
@@ -215,7 +215,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	// Exp e;
 	public Type visit(Assign n) {
-		Type i = symbolTable.getVarType(currMethod, currClass, n.toString());
+		Type i = symbolTable.getVarType(currMethod, currClass, n.i.toString());
 		n.i.accept(this);
 		Type e = n.e.accept(this);
 		
@@ -356,12 +356,39 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	// ExpList el;
 	public Type visit(Call n) {
-		n.e.accept(this);
-		n.i.accept(this);
-		for (int i = 0; i < n.el.size(); i++) {
-			n.el.elementAt(i).accept(this);
+		
+		Type ct = n.e.accept(this);
+		Type t = null;
+		
+		if(ct instanceof IdentifierType) {
+			
+			Class c = symbolTable.getClass(((IdentifierType) ct).s);
+			Method m = symbolTable.getMethod(n.i.toString(), c.getId());
+			
+			if(m == null) {
+				System.out.println("Método não encontrado (Call)");
+				
+			} else {
+
+				t = n.i.accept(this);
+				
+				if (n.el.size() == countParams(m)) {
+					for (int i = 0; i < n.el.size(); i++) {
+						Type el = n.el.elementAt(i).accept(this);
+						if(!this.symbolTable.compareTypes(el, m.getParamAt(i).type())) {
+							System.err.println("Tipos não compatíveis nos parâmetros do método (Call)");
+						}
+					}
+				}else {
+					System.err.println("Quantidade dos parâmetros é diferente da explist (Call)");
+				}
+			}
+			
+		} else {
+			System.out.println("Classe não encontrada (Call)");
 		}
-		return null;
+		
+		return t;
 	}
 
 	// int i;
@@ -379,7 +406,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 
 	// String s;
 	public Type visit(IdentifierExp n) {
-		Type i = symbolTable.getVarType(currMethod, currClass, n.toString());
+		Type i = symbolTable.getVarType(currMethod, currClass, n.s);
 		if(i == null) {
 			System.err.println("identifier não encontrado (IdentifierExp)");
 		}
@@ -423,4 +450,17 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	public Type visit(Identifier n) {
 		return null;
 	}
+	
+	public int countParams(Method m) {
+		int i = 0;
+		int count = 1;
+		while (true) {
+			if(m.getParamAt(i) == null) {
+				break;
+			}
+			count ++;
+		}
+		return count;
+	}
+	
 }
