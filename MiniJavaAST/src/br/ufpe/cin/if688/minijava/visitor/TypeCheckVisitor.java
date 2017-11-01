@@ -44,11 +44,13 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	private SymbolTable symbolTable;
 	private Class currClass;
 	private Method currMethod;
+	private boolean flag;
 
 	TypeCheckVisitor(SymbolTable st) {
 		symbolTable = st;
 		currClass = null;
 		currMethod = null;
+		flag = false;
 	}
 
 	// MainClass m;
@@ -106,8 +108,10 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Type t;
 	// Identifier i;
 	public Type visit(VarDecl n) {
+		flag = true;
 		Type t = n.t.accept(this);
 		n.i.accept(this);
+		flag = false;
 		return t;
 	}
 
@@ -144,8 +148,10 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Type t;
 	// Identifier i;
 	public Type visit(Formal n) {
+		flag = true;
 		Type t = n.t.accept(this);
 		n.i.accept(this);
+		flag = false;
 		return t;
 	}
 
@@ -215,7 +221,9 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	// Exp e;
 	public Type visit(Assign n) {
+		flag = true;
 		Type i = symbolTable.getVarType(currMethod, currClass, n.i.toString());
+		flag = false;
 		n.i.accept(this);
 		Type e = n.e.accept(this);
 		
