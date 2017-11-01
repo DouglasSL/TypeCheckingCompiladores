@@ -71,7 +71,7 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 		} else {
 			currClass = symbolTable.getClass(n.i1.toString());
 			currClass.addMethod("main", null);
-			
+
 			n.i1.accept(this);
 			n.i2.accept(this);
 			n.s.accept(this);
@@ -89,7 +89,6 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 		if (!symbolTable.addClass(n.i.toString(), null)) {
 			System.err.println("A classe " + n.i.toString() + " já foi criada");
 		} else {
-			//symbolTable.addClass(n.i.toString(), null);
 			currClass = symbolTable.getClass(n.i.toString());
 			
 			n.i.accept(this);
