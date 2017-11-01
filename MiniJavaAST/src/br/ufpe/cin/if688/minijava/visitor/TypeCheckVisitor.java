@@ -456,7 +456,23 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 
 	// String s;
 	public Type visit(Identifier n) {
-		return null;
+		if (!flag) {
+			if (!symbolTable.containsClass(n.s)) {
+				System.err.println("Classe não encontrada (Identifier)");
+			} else {
+				return symbolTable.getClass(n.s).type();
+			}
+			
+		} else {
+			Type i = symbolTable.getVarType(currMethod, currClass, n.s);
+			if (i == null) {
+				System.err.println("Variável não encontrada (Identifier)");
+			}
+			
+			return i;
+		}
+		
+		return new IdentifierType(n.s);
 	}
 	
 	public int countParams(Method m) {
