@@ -46,7 +46,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	private Method currMethod;
 	private boolean flag;
 
-	TypeCheckVisitor(SymbolTable st) {
+	public TypeCheckVisitor(SymbolTable st) {
 		symbolTable = st;
 		currClass = null;
 		currMethod = null;
@@ -67,12 +67,14 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Statement s;
 	public Type visit(MainClass n) {
 		currClass = symbolTable.getClass(n.i1.toString());
+		currMethod = symbolTable.getMethod("main", currClass.getId());
 		n.i1.accept(this);
+		flag = true;
 		n.i2.accept(this);
+		flag = false;
 		n.s.accept(this);
 		return null;
 	}
-
 	// Identifier i;
 	// VarDeclList vl;
 	// MethodDeclList ml;
@@ -222,13 +224,13 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Exp e;
 	public Type visit(Assign n) {
 		flag = true;
-		Type i = symbolTable.getVarType(currMethod, currClass, n.i.toString());
+		Type i = symbolTable.getVarType(currMethod, currClass, n.i.s);
 		flag = false;
 		n.i.accept(this);
 		Type e = n.e.accept(this);
 		
 		if(!symbolTable.compareTypes(i, e)) {
-			System.err.println("Os tipos de identifier e expressão são diferentes");
+			System.err.println("Os tipos de identifier e expressão são diferentes (Assign)");
 		}
 		
 		return null;
@@ -237,6 +239,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	// Exp e1,e2;
 	public Type visit(ArrayAssign n) {
+		flag = true;
 		Type i = n.i.accept(this);
 		Type e1 = n.e1.accept(this);
 		Type e2 = n.e2.accept(this);
@@ -250,7 +253,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		if(!(e2 instanceof IntegerType)) {
 			System.err.println("A expressão 2 não é do tipo Int (ArrayAssign)");
 		}
-		
+		flag = false;
 		return null;
 	}
 
@@ -440,7 +443,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	public Type visit(NewObject n) {
 		n.i.accept(this);
-		return symbolTable.getClass(n.toString()).type();
+		return symbolTable.getClass(n.i.s).type();
 	}
 
 	// Exp e;
@@ -457,9 +460,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// String s;
 	public Type visit(Identifier n) {
 		if (!flag) {
-			if (!symbolTable.containsClass(n.s)) {
-				System.err.println("Classe não encontrada (Identifier)");
-			} else {
+			if (symbolTable.containsClass(n.s)) {
 				return symbolTable.getClass(n.s).type();
 			}
 			
@@ -476,10 +477,9 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	}
 	
 	public int countParams(Method m) {
-		int i = 0;
-		int count = 1;
+		int count = 0;
 		while (true) {
-			if(m.getParamAt(i) == null) {
+			if(m.getParamAt(count) == null) {
 				break;
 			}
 			count ++;

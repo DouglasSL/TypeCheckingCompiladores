@@ -71,6 +71,8 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 		} else {
 			currClass = symbolTable.getClass(n.i1.toString());
 			currClass.addMethod("main", null);
+			currMethod = currClass.getMethod("main");
+			currMethod.addParam(n.i2.toString(), new IntegerType());
 
 			n.i1.accept(this);
 			n.i2.accept(this);
