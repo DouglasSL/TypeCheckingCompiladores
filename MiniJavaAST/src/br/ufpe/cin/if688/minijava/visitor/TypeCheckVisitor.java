@@ -44,13 +44,16 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	private SymbolTable symbolTable;
 	private Class currClass;
 	private Method currMethod;
-	private boolean flag;
-
+	private boolean flagMethod;
+	private boolean flagVar;
+	
+	
 	public TypeCheckVisitor(SymbolTable st) {
 		symbolTable = st;
 		currClass = null;
 		currMethod = null;
-		flag = false;
+		flagMethod = false;
+		flagVar = false;
 	}
 
 	// MainClass m;
@@ -69,10 +72,14 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		currClass = symbolTable.getClass(n.i1.toString());
 		currMethod = symbolTable.getMethod("main", currClass.getId());
 		n.i1.accept(this);
-		flag = true;
+		flagVar = true;
 		n.i2.accept(this);
-		flag = false;
+		flagVar = false;
 		n.s.accept(this);
+
+		currMethod = null;
+		currClass = null;
+		
 		return null;
 	}
 	// Identifier i;
@@ -87,6 +94,9 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		
+		currClass = null;
+		
 		return null;
 	}
 
@@ -104,16 +114,19 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		
+		currClass = null;
+		
 		return null;
 	}
 
 	// Type t;
 	// Identifier i;
 	public Type visit(VarDecl n) {
-		flag = true;
 		Type t = n.t.accept(this);
+		flagVar = true;
 		n.i.accept(this);
-		flag = false;
+		flagVar = false;
 		return t;
 	}
 
@@ -126,7 +139,10 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	public Type visit(MethodDecl n) {
 		currMethod = symbolTable.getMethod(n.i.toString(), currClass.getId());
 		Type t = n.t.accept(this);
+		flagMethod = true;
 		n.i.accept(this);
+		flagMethod = false;
+		
 		for (int i = 0; i < n.fl.size(); i++) {
 			n.fl.elementAt(i).accept(this);
 		}
@@ -139,21 +155,22 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e = n.e.accept(this);
 		
 		if(!(symbolTable.compareTypes(t, e))) {
-			System.err.println("Tipo da Express„o È diferente do tipo do mÈtodo (MethodDecl)");
+			System.err.println("Tipo da Express√£o √© diferente do tipo do m√©todo (MethodDecl)");
 		}
 		
 		currMethod = null;
 		
 		return t;
+		
 	}
 
 	// Type t;
 	// Identifier i;
 	public Type visit(Formal n) {
-		flag = true;
 		Type t = n.t.accept(this);
+		flagVar = true;
 		n.i.accept(this);
-		flag = false;
+		flagVar = false;
 		return t;
 	}
 
@@ -172,7 +189,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// String s;
 	public Type visit(IdentifierType n) {
 		if(!symbolTable.containsClass(n.s)) {
-			System.err.println("Tipo da classe n„o encontrada (IdentifierType)");
+			System.err.println("Tipo da classe n√£o encontrada (IdentifierType)");
 		}
 		return n;
 	}
@@ -191,7 +208,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e = n.e.accept(this);
 		
 		if(!(e instanceof BooleanType)) {
-			System.err.println("A express„o n„o È do tipo Boolean (If)");
+			System.err.println("A express√£o n√£o √© do tipo Boolean (If)");
 		}
 		
 		n.s1.accept(this);
@@ -206,7 +223,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e = n.e.accept(this);
 		
 		if(!(e instanceof BooleanType)) {
-			System.err.println("A express„o n„o È do tipo Boolean (While)");
+			System.err.println("A express√£o n√£o √© do tipo Boolean (While)");
 		}
 		
 		n.s.accept(this);
@@ -223,14 +240,14 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	// Exp e;
 	public Type visit(Assign n) {
-		flag = true;
 		Type i = symbolTable.getVarType(currMethod, currClass, n.i.s);
-		flag = false;
+		flagVar = true;
 		n.i.accept(this);
+		flagVar = false;
 		Type e = n.e.accept(this);
 		
 		if(!symbolTable.compareTypes(i, e)) {
-			System.err.println("Os tipos de identifier e express„o s„o diferentes (Assign)");
+			System.err.println("Os tipos de identifier e express√£o s√£o diferentes (Assign)");
 		}
 		
 		return null;
@@ -239,21 +256,22 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	// Exp e1,e2;
 	public Type visit(ArrayAssign n) {
-		flag = true;
+		flagVar = true;
 		Type i = n.i.accept(this);
+		flagVar = false;
 		Type e1 = n.e1.accept(this);
 		Type e2 = n.e2.accept(this);
 		
 		if(!(i instanceof IntArrayType)) {
-			System.err.println("O identifier n„o È do tipo IntArray (ArrayAssign)");
+			System.err.println("O identifier n√£o √© do tipo IntArray (ArrayAssign)");
 		}
 		if(!(e1 instanceof IntegerType)) {
-			System.err.println("A express„o 1 (Index) n„o È do tipo Int (ArrayAssign)");
+			System.err.println("A express√£o 1 (Index) n√£o √© do tipo Int (ArrayAssign)");
 		}
 		if(!(e2 instanceof IntegerType)) {
-			System.err.println("A express„o 2 n„o È do tipo Int (ArrayAssign)");
+			System.err.println("A express√£o 2 n√£o √© do tipo Int (ArrayAssign)");
 		}
-		flag = false;
+		
 		return null;
 	}
 
@@ -262,12 +280,12 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e1 = n.e1.accept(this);
 		Type e2 = n.e2.accept(this);
 		
-		if(!(e1 instanceof IntegerType)) {
-			System.err.println("A express„o 1 n„o È do tipo Int (Times)");
+		if(!(e1 instanceof BooleanType)) {
+			System.err.println("A express√£o 1 n√£o √© do tipo Boolean (And)");
 		}
 		
-		if (!(e2 instanceof IntegerType)) {
-			System.err.println("A express„o 2 n„o È do tipo Int (Times)");
+		if (!(e2 instanceof BooleanType)) {
+			System.err.println("A express√£o 2 n√£o √© do tipo Boolean (And)");
 		}
 		
 		return new BooleanType();
@@ -279,11 +297,11 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e2 = n.e2.accept(this);
 		
 		if(!(e1 instanceof IntegerType)) {
-			System.err.println("A express„o 1 n„o È do tipo Int (Times)");
+			System.err.println("A express√£o 1 n√£o √© do tipo Int (LessThan)");
 		}
 		
 		if (!(e2 instanceof IntegerType)) {
-			System.err.println("A express„o 2 n„o È do tipo Int (Times)");
+			System.err.println("A express√£o 2 n√£o √© do tipo Int (LessThan)");
 		}
 		
 		return new BooleanType();
@@ -295,11 +313,11 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e2 = n.e2.accept(this);
 		
 		if(!(e1 instanceof IntegerType)) {
-			System.err.println("A express„o 1 n„o È do tipo Int (Plus)");
+			System.err.println("A express√£o 1 n√£o √© do tipo Int (Plus)");
 		}
 		
 		if (!(e2 instanceof IntegerType)) {
-			System.err.println("A express„o 2 n„o È do tipo Int (Plus)");
+			System.err.println("A express√£o 2 n√£o √© do tipo Int (Plus)");
 		}
 		
 		return new IntegerType();
@@ -311,11 +329,11 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e2 = n.e2.accept(this);
 		
 		if(!(e1 instanceof IntegerType)) {
-			System.err.println("A express„o 1 n„o È do tipo Int (Minus)");
+			System.err.println("A express√£o 1 n√£o √© do tipo Int (Minus)");
 		}
 		
 		if (!(e2 instanceof IntegerType)) {
-			System.err.println("A express„o 2 n„o È do tipo Int (Minus)");
+			System.err.println("A express√£o 2 n√£o √© do tipo Int (Minus)");
 		}
 		
 		return new IntegerType();
@@ -327,11 +345,11 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e2 = n.e2.accept(this);
 		
 		if(!(e1 instanceof IntegerType)) {
-			System.err.println("A express„o 1 n„o È do tipo Int (Times)");
+			System.err.println("A express√£o 1 n√£o √© do tipo Int (Times)");
 		}
 		
 		if (!(e2 instanceof IntegerType)) {
-			System.err.println("A express„o 2 n„o È do tipo Int (Times)");
+			System.err.println("A express√£o 2 n√£o √© do tipo Int (Times)");
 		}
 		
 		return new IntegerType();
@@ -343,10 +361,10 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e2 = n.e2.accept(this);
 		
 		if (!(e1 instanceof IntArrayType)) {
-			System.err.println("A express„o 1 n„o È um IntArray (ArrayLookup)");
+			System.err.println("A express√£o 1 n√£o √© um IntArray (ArrayLookup)");
 		}
 		if (!(e2 instanceof IntegerType)) {
-			System.err.println("A express„o 2 n„o È um Int (ArrayLookup)");
+			System.err.println("A express√£o 2 n√£o √© um Int (ArrayLookup)");
 		}
 		
 		return new IntegerType();
@@ -357,7 +375,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e = n.e.accept(this);
 		
 		if(!(e instanceof IntArrayType)) {
-			System.err.println("A express„o n„o do tipo IntArray (ArrayLength)");
+			System.err.println("A express√£o n√£o do tipo IntArray (ArrayLength)");
 		}
 		
 		return new IntegerType();
@@ -367,39 +385,41 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	// Identifier i;
 	// ExpList el;
 	public Type visit(Call n) {
-		
 		Type ct = n.e.accept(this);
-		Type t = null;
 		
 		if(ct instanceof IdentifierType) {
 			
 			Class c = symbolTable.getClass(((IdentifierType) ct).s);
 			Method m = symbolTable.getMethod(n.i.toString(), c.getId());
 			
-			if(m == null) {
-				System.out.println("MÈtodo n„o encontrado (Call)");
-				
-			} else {
-
-				t = n.i.accept(this);
-				
-				if (n.el.size() == countParams(m)) {
-					for (int i = 0; i < n.el.size(); i++) {
-						Type el = n.el.elementAt(i).accept(this);
-						if(!this.symbolTable.compareTypes(el, m.getParamAt(i).type())) {
-							System.err.println("Tipos n„o compatÌveis nos par‚metros do mÈtodo (Call)");
-						}
+			Class aux = currClass;
+			currClass = c;
+			
+			flagMethod = true;
+			Type t = n.i.accept(this);
+			flagMethod = false;
+			
+			currClass = aux;
+			
+			if (n.el.size() == countParams(m)) {
+				for (int i = 0; i < n.el.size(); i++) {
+					Type el = n.el.elementAt(i).accept(this);
+					if(!this.symbolTable.compareTypes(el, m.getParamAt(i).type())) {
+						System.err.println("Tipos n√£o compat√≠veis nos par√¢metros do m√©todo (Call)");
 					}
-				}else {
-					System.err.println("Quantidade dos par‚metros È diferente da explist (Call)");
 				}
+			}else {
+				System.err.println("Quantidade dos par√¢metros √© diferente da explist (Call)");
 			}
+
+			return t;
 			
 		} else {
-			System.out.println("Classe n„o encontrada (Call)");
+			System.out.println("Classe n√£o encontrada (Call)");
 		}
 		
-		return t;
+		return null;
+		
 	}
 
 	// int i;
@@ -419,7 +439,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 	public Type visit(IdentifierExp n) {
 		Type i = symbolTable.getVarType(currMethod, currClass, n.s);
 		if(i == null) {
-			System.err.println("identifier n„o encontrado (IdentifierExp)");
+			System.err.println("identifier n√£o encontrado (IdentifierExp)");
 		}
 		
 		return i;
@@ -434,7 +454,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e = n.e.accept(this);
 		
 		if(!(e instanceof IntegerType)) {
-			System.err.println("A express„o n„o È do tipo Int (NewArray)");
+			System.err.println("A express√£o n√£o √© do tipo Int (NewArray)");
 		}
 		
 		return new IntArrayType();
@@ -442,8 +462,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 
 	// Identifier i;
 	public Type visit(NewObject n) {
-		n.i.accept(this);
-		return symbolTable.getClass(n.i.s).type();
+		return n.i.accept(this);
 	}
 
 	// Exp e;
@@ -451,7 +470,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		Type e = n.e.accept(this);
 		
 		if(!(e instanceof BooleanType)) {
-			System.err.println("A express„o n„o È do tipo Boolean (Not)");
+			System.err.println("A express√£o n√£o √© do tipo Boolean (Not)");
 		}
 		
 		return new BooleanType();
@@ -459,21 +478,28 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 
 	// String s;
 	public Type visit(Identifier n) {
-		if (!flag) {
-			if (symbolTable.containsClass(n.s)) {
-				return symbolTable.getClass(n.s).type();
+		if (flagMethod) {
+			if(symbolTable.getMethod(n.toString(), currClass.getId()) == null) {
+				System.err.println("M√©todo n√£o encontrado (Identifier)");
+			} else { 
+				return this.symbolTable.getMethodType(n.toString(), this.currClass.getId());
 			}
-			
-		} else {
-			Type i = symbolTable.getVarType(currMethod, currClass, n.s);
-			if (i == null) {
-				System.err.println("Vari·vel n„o encontrada (Identifier)");
+
+		} else if (flagVar){
+			if (symbolTable.getVarType(currMethod, currClass, n.toString()) == null) {
+				System.err.println("Vari√°vel n√£o encontrada (Identifier)");
+			} else {
+				return symbolTable.getVarType(currMethod, currClass, n.toString());
 			}
-			
-			return i;
+		}else {
+			if(symbolTable.getClass(n.toString()) == null) {
+				System.err.println("Classe n√£o encontrada (Identifier)");
+			}
+			return symbolTable.getClass(n.toString()).type();
 		}
 		
-		return new IdentifierType(n.s);
+		return null;
+			
 	}
 	
 	public int countParams(Method m) {
@@ -486,5 +512,19 @@ public class TypeCheckVisitor implements IVisitor<Type> {
 		}
 		return count;
 	}
+	
+	public String teste(Type t) {
+		if (t instanceof BooleanType)
+			return "BooleanType";
+		else if (t instanceof IdentifierType)
+			return ((IdentifierType) t).s;
+		else if (t instanceof IntArrayType)
+			return "IntArrayType";
+		else if (t instanceof IntegerType)
+			return "IntegerType";
+		else
+			return "Null";
+	}
+	
 	
 }
