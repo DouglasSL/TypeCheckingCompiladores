@@ -66,20 +66,13 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// Identifier i1,i2;
 	// Statement s;
 	public Void visit(MainClass n) {
-		if (!symbolTable.addClass(n.i1.toString(), null)) {
-			System.err.println("A classe " + n.i1.toString() + " j· foi criada");
-		} else {
-			currClass = symbolTable.getClass(n.i1.toString());
-			currClass.addMethod("main", null);
-			currMethod = currClass.getMethod("main");
-			currMethod.addParam(n.i2.toString(), new IntegerType());
-
-			n.i1.accept(this);
-			n.i2.accept(this);
-			n.s.accept(this);
-			return null;
-		}
-		
+		symbolTable.addClass(n.i1.toString(), null);
+		currClass = symbolTable.getClass(n.i1.toString());
+		currClass.addMethod("main", null);
+		currClass.getMethod("main").addParam(n.i2.toString(), new IntArrayType());
+		n.i1.accept(this);
+		n.i2.accept(this);
+		n.s.accept(this);
 		return null;
 		
 	}
@@ -89,19 +82,21 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// MethodDeclList ml;
 	public Void visit(ClassDeclSimple n) {
 		if (!symbolTable.addClass(n.i.toString(), null)) {
-			System.err.println("A classe " + n.i.toString() + " j· foi criada");
+			System.err.println("A classe " + n.i.toString() + " j√° foi criada");
 		} else {
 			currClass = symbolTable.getClass(n.i.toString());
 			
 			n.i.accept(this);
+			
 			for (int i = 0; i < n.vl.size(); i++) {
 				n.vl.elementAt(i).accept(this);
 			}
 			for (int i = 0; i < n.ml.size(); i++) {
 				n.ml.elementAt(i).accept(this);
 			}
-			return null;
 		}
+		
+		currClass = null;
 		
 		return null;
 		
@@ -113,7 +108,7 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// MethodDeclList ml;
 	public Void visit(ClassDeclExtends n) {
 		if (!symbolTable.addClass(n.i.toString(), n.j.toString())) {
-			System.err.println("A classe " + n.i.toString() + " j· foi criada (extends)");
+			System.err.println("A classe " + n.i.toString() + " j√° foi criada (extends)");
 		} else {
 			currClass = symbolTable.getClass(n.i.toString());
 			
@@ -125,8 +120,9 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 			for (int i = 0; i < n.ml.size(); i++) {
 				n.ml.elementAt(i).accept(this);
 			}
-			return null;
 		}
+		
+		currClass = null;
 		
 		return null;
 		
@@ -135,19 +131,19 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// Type t;
 	// Identifier i;
 	public Void visit(VarDecl n) {
-		
+
 		if (currMethod == null) {
 			if(!currClass.addVar(n.i.toString(),n.t)){
-				System.err.println("Vari·vel " + n.i.toString() + 
-						" j· est· declarada na classe " + currClass.getId());
+				System.err.println("Vari√°vel " + n.i.toString() + 
+						" j√° est√° declarada na classe " + currClass.getId());
 			}
 		} else {
 			if(!currMethod.addVar(n.i.toString(), n.t)){
-				System.err.println("Vari·vel " + n.i.toString() + 
-						" j· est· declarada no mÈtodo " + currMethod.getId());
+				System.err.println("Vari√°vel " + n.i.toString() + 
+						" j√° est√° declarada no m√©todo " + currMethod.getId());
 			}
 		}		
-		
+
 		n.t.accept(this);
 		n.i.accept(this);
 		
@@ -162,7 +158,7 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// Exp e;
 	public Void visit(MethodDecl n) {
 		if (!currClass.addMethod(n.i.toString(), n.t)) {
-			System.err.println("MÈtodo " + n.i.toString() + " j· existe.");
+			System.err.println("M√©todo " + n.i.toString() + " j√° existe.");
 		} else {
 			currMethod = currClass.getMethod(n.i.toString());
 			
@@ -189,7 +185,7 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
 	// Identifier i;
 	public Void visit(Formal n) {
 		if (!currMethod.addParam(n.i.toString(), n.t)){
-			System.err.println("O par‚metro " + n.i.toString() + " ja foi passado no mÈtodo");
+			System.err.println("O par√¢metro " + n.i.toString() + " ja foi passado no m√©todo");
 		}
 		n.t.accept(this);
 		n.i.accept(this);
